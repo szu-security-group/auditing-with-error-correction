@@ -197,7 +197,7 @@ public class ReedSolomon {
     }
 
     /**
-     * Checks the consistency of arguments passed to public methods.  ¼ì²é´«µİ¸ø¹«¹²·½·¨µÄ²ÎÊıµÄÒ»ÖÂĞÔ¡£
+     * Checks the consistency of arguments passed to public methods.  æ£€æŸ¥ä¼ é€’ç»™å…¬å…±æ–¹æ³•çš„å‚æ•°çš„ä¸€è‡´æ€§ã€‚
      */
     private void checkBuffersAndSizes(byte [] [] shards, int offset, int byteCount) {
         // The number of buffers should be equal to the number of

@@ -43,7 +43,7 @@ public class AuditingwithErrorCorrection {
 		this.SHARD_NUMBER = (Integer.parseInt(String.valueOf(storeSize)) + DATA_SHARDS - 1) / DATA_SHARDS;
 		System.out.println("The number of data shards is:"+SHARD_NUMBER+".");
 
-		//The source data£¬Each row represents an m_i,Where the last n-k bytes of each line are the corresponding paritys
+		//The source data, Each row represents an m_i,Where the last n-k bytes of each line are the corresponding paritys
 		this.originaldata = new byte [SHARD_NUMBER] [DATA_SHARDS];
 		FileInputStream in = new FileInputStream(inputFile);
 		// Fill in the data shards
@@ -153,7 +153,7 @@ public class AuditingwithErrorCorrection {
     		for(int k=0;k<DATA_SHARDS;k++){
     			tempm[k]=Galois.multiply(challenge.coefficients[i], originaldata[j][k]);
     		}
-    		//Calculate c_j . ¦Ò_ij
+    		//Calculate c_j . Ïƒ_ij
     		for (int k = 0; k < PARITY_SHARDS; k++) {
 				tempp[k]=Galois.multiply(challenge.coefficients[i], paritys[j][k]);
 			}
