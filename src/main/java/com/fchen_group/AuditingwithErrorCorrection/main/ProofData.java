@@ -1,4 +1,4 @@
-package AuditingwithErrorCorrection;
+package com.fchen_group.AuditingwithErrorCorrection.main;
 
 public class ProofData {
 

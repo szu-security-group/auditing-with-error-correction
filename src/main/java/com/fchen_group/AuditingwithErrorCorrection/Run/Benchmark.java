@@ -1,12 +1,12 @@
-package Run;
+package com.fchen_group.AuditingwithErrorCorrection.Run;
 
 import java.io.IOException;
 
 import com.javamex.classmexer.MemoryUtil;
 
-import AuditingwithErrorCorrection.AuditingwithErrorCorrection;
-import AuditingwithErrorCorrection.ChallengeData;
-import AuditingwithErrorCorrection.ProofData;
+import com.fchen_group.AuditingwithErrorCorrection.main.AuditingwithErrorCorrection;
+import com.fchen_group.AuditingwithErrorCorrection.main.ChallengeData;
+import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
 
 public class Benchmark {
 

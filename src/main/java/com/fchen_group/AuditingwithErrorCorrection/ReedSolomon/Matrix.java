@@ -1,4 +1,4 @@
-package ReedSolomon;
+package com.fchen_group.AuditingwithErrorCorrection.ReedSolomon;
 /**
  * A matrix over the 8-bit Galois field.
  *

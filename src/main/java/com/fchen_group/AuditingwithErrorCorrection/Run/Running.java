@@ -1,4 +1,4 @@
-package Run;
+package com.fchen_group.AuditingwithErrorCorrection.Run;
 
 import java.io.IOException;
 import java.util.Scanner;

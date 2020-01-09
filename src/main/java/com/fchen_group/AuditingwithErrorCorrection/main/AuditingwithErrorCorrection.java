@@ -1,4 +1,4 @@
-package AuditingwithErrorCorrection;
+package com.fchen_group.AuditingwithErrorCorrection.main;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,8 +8,8 @@ import java.util.Random;
 
 import com.javamex.classmexer.MemoryUtil;
 
-import ReedSolomon.Galois;
-import ReedSolomon.ReedSolomon;
+import com.fchen_group.AuditingwithErrorCorrection.ReedSolomon.Galois;
+import com.fchen_group.AuditingwithErrorCorrection.ReedSolomon.ReedSolomon;
 
 public class AuditingwithErrorCorrection {
 	private  final int DATA_SHARDS;             //message length k

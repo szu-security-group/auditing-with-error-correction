@@ -1,4 +1,4 @@
-package ReedSolomon;
+package com.fchen_group.AuditingwithErrorCorrection.ReedSolomon;
 
 /**
  * Reed-Solomon Coding over 8-bit values.

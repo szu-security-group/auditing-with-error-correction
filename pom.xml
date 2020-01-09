@@ -6,7 +6,23 @@
 
     <groupId>com.fchen_group</groupId>
     <artifactId>AuditingwithErrorCorrection</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.javamex</groupId>
+            <artifactId>classmexer</artifactId>
+            <version>1.6.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/classmexer.jar</systemPath>
+        </dependency>
+    </dependencies>
 </project>

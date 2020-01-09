@@ -1,4 +1,4 @@
-package ReedSolomon;
+package com.fchen_group.AuditingwithErrorCorrection.ReedSolomon;
 
 import java.io.File;
 import java.io.FileInputStream;
