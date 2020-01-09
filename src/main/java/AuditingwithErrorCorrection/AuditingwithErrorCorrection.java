@@ -42,7 +42,7 @@ public class AuditingwithErrorCorrection {
 		
 		this.SHARD_NUMBER = (Integer.parseInt(String.valueOf(storeSize)) + DATA_SHARDS - 1) / DATA_SHARDS;
 		System.out.println("The number of data shards is:"+SHARD_NUMBER+".");
-	
+
 		//The source data£¬Each row represents an m_i,Where the last n-k bytes of each line are the corresponding paritys
 		this.originaldata = new byte [SHARD_NUMBER] [DATA_SHARDS];
 		FileInputStream in = new FileInputStream(inputFile);
