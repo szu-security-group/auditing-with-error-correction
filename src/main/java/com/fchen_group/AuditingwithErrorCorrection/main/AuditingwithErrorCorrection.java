@@ -74,37 +74,36 @@ public class AuditingwithErrorCorrection {
         this.sKey = s.toString();
     }
 
-    //Error-correcting coding of the source data
+    /**
+     * Error-correcting coding of the source data
+     */
     public void outsource() {
         this.paritys = new byte[SHARD_NUMBER][];
         ReedSolomon reedSolomon = new ReedSolomon(DATA_SHARDS, PARITY_SHARDS);
         for (int i = 0; i < SHARD_NUMBER; i++) {
-            //Error correction coding is performed for each m_i
+            // Error correction coding is performed for each m_i
             paritys[i] = reedSolomon.encodeParity(originaldata[i], 0, 1);
         }
 
-        //Add a secret key
-        for (int j = 0; j < paritys.length; j++) {
+        // Add a secret key
+        for (int i = 0; i < paritys.length; i++) {
             byte[] spkey = sKey.getBytes();
-            if (spkey.length != paritys[j].length) {
+            if (spkey.length != paritys[i].length) {
                 System.out.println("Error:The length of s is inconsistent with that of paritys.length.");
-            } else {
-                for (int i = 0; i < paritys[j].length; i++) {
-                    paritys[j][i] = Galois.multiply(paritys[j][i], spkey[i]);
-                }
+                continue;
+            }
+            for (int j = 0; j < paritys[i].length; j++) {
+                paritys[i][j] = Galois.multiply(paritys[i][j], spkey[j]);
             }
         }
 
-        //Add a pseudo random number
+        // Add a pseudo random number
         for (int i = 0; i < paritys.length; i++) {
             byte[] randoms = PseudoRandom.generateRandom(i, this.Key, PARITY_SHARDS);
-            //System.out.println("Index:"+i+" this length:"+paritys[i].length);
-            //For each parity adding a pseudo random number
+            // For each parity adding a pseudo random number
             for (int j = 0; j < PARITY_SHARDS; j++) {
-                //System.out.print(String.format("%02x ", randoms[j]));
                 paritys[i][j] = Galois.add(paritys[i][j], randoms[j]);
             }
-            //System.out.println("");
         }
     }
 
