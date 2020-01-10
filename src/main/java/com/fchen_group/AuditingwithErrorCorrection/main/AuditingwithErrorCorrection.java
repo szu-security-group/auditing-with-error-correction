@@ -51,25 +51,27 @@ public class AuditingwithErrorCorrection {
 
     /**
      * Key generation function, executed only once
-     *
-     * @return
      */
     public void keyGen() {
         String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        StringBuffer sBuffer = new StringBuffer();
-        Random random = new Random();
+
+        // generate k
+        Random kRandom = new Random();
+        StringBuilder k = new StringBuilder();
         for (int i = 0; i < len; i++) {
-            sBuffer.append(chars.charAt(random.nextInt(chars.length())));
+            k.append(chars.charAt(kRandom.nextInt(chars.length())));
         }
-        //System.out.println("This is keyPRF:"+sBuffer.toString());
-        //return sBuffer.toString();
-        Random rand = new Random();
-        String valString = "";
+
+        // generate s
+        Random sRandom = new Random();
+        StringBuilder s = new StringBuilder();
         for (int i = 0; i < this.PARITY_SHARDS; i++) {
-            valString += chars.charAt(rand.nextInt(chars.length()));
+            s.append(chars.charAt(sRandom.nextInt(chars.length())));
         }
-        this.sKey = valString;
-        this.Key = sBuffer.toString();
+
+        // K = (Key, sKey)
+        this.Key = k.toString();
+        this.sKey = s.toString();
     }
 
     //Error-correcting coding of the source data
