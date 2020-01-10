@@ -41,14 +41,14 @@ public class Benchmark {
         long startTime = 0, endTime = 0;
 
         startTime = System.nanoTime();
-        aErrorCorrection.generateKey();
+        aErrorCorrection.keyGen();
         endTime = System.nanoTime();
         time[0] = endTime - startTime;
 
         System.out.println("\n-----Outsource-----\n");
 
         startTime = System.nanoTime();
-        aErrorCorrection.Outsource();
+        aErrorCorrection.outsource();
         endTime = System.nanoTime();
         time[1] = endTime - startTime;
 

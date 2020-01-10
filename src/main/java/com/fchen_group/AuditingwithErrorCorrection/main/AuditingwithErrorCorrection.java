@@ -54,7 +54,7 @@ public class AuditingwithErrorCorrection {
      *
      * @return
      */
-    public void generateKey() {
+    public void keyGen() {
         String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
         StringBuffer sBuffer = new StringBuffer();
         Random random = new Random();
@@ -73,7 +73,7 @@ public class AuditingwithErrorCorrection {
     }
 
     //Error-correcting coding of the source data
-    public void Outsource() {
+    public void outsource() {
         this.paritys = new byte[SHARD_NUMBER][];
         ReedSolomon reedSolomon = new ReedSolomon(DATA_SHARDS, PARITY_SHARDS);
         for (int i = 0; i < SHARD_NUMBER; i++) {
