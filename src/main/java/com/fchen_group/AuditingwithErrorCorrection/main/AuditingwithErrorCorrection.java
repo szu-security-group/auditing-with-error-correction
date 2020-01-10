@@ -16,11 +16,8 @@ public class AuditingwithErrorCorrection {
     private final int PARITY_SHARDS;           //Amount of fault tolerance n-k
     private final int SHARD_NUMBER;             //The total number of data blocks F/n
 
-    private long fileSize;
-    private long storeSize;
     private String Key;
     private String sKey;
-    private String file;
 
     public final int BYTES_IN_INT = 4;
     public byte[][] paritys;                  //paritys
@@ -28,15 +25,15 @@ public class AuditingwithErrorCorrection {
     public static int len = 16;                     //Security parameter, here only the character length of the key
 
     public AuditingwithErrorCorrection(String filepath, int n, int k) throws IOException {
-        this.file = filepath;
         this.DATA_SHARDS = k;
         this.PARITY_SHARDS = n - k;
-        File inputFile = new File(this.file);
+
         // Get the size of the input file.  (Files bigger that Integer.MAX_VALUE will fail here!)
-        this.fileSize = inputFile.length();
+        File inputFile = new File(filepath);
+        long fileSize = inputFile.length();
 
         // Figure out how big each shard will be.The total size stored will be the file size (8 bytes) plus the file.
-        this.storeSize = fileSize + BYTES_IN_INT;
+        long storeSize = fileSize + BYTES_IN_INT;
         System.out.println("The storedSize is:" + storeSize + " Bytes.");
 
         this.SHARD_NUMBER = (Integer.parseInt(String.valueOf(storeSize)) + DATA_SHARDS - 1) / DATA_SHARDS;
