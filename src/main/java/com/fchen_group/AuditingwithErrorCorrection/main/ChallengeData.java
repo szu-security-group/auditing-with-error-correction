@@ -1,6 +1,9 @@
 package com.fchen_group.AuditingwithErrorCorrection.main;
 
-public class ChallengeData {
+import java.io.Serializable;
+
+public class ChallengeData implements Serializable {
+    private static final long serialVersionUID = 8074523611235693986L;
     public byte[] coefficients;
     public int[] index;
 

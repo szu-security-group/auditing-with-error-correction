@@ -1,6 +1,9 @@
 package com.fchen_group.AuditingwithErrorCorrection.main;
 
-public class ProofData {
+import java.io.Serializable;
+
+public class ProofData implements Serializable {
+	private static final long serialVersionUID = 8074523617533993986L;
 	public byte[] dataproof;
 	public byte[] parityproof;
 
