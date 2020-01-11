@@ -254,4 +254,28 @@ public class AuditingwithErrorCorrection {
 //		return result;
         return MemoryUtil.deepMemoryUsageOf(paritys);
     }
+
+    public int getSHARD_NUMBER() {
+        return SHARD_NUMBER;
+    }
+
+    public int getPARITY_SHARDS() {
+        return PARITY_SHARDS;
+    }
+
+    public String getKey() {
+        return Key;
+    }
+
+    public String getsKey() {
+        return sKey;
+    }
+
+    public void setKey(String Key) {
+        this.Key = Key;
+    }
+
+    public void setsKey(String sKey) {
+        this.sKey = sKey;
+    }
 }
