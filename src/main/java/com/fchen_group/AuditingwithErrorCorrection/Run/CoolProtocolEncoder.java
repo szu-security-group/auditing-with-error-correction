@@ -10,6 +10,7 @@ public class CoolProtocolEncoder  extends MessageToByteEncoder<CoolProtocol> {
     protected void encode(ChannelHandlerContext tcx, CoolProtocol msg, ByteBuf out) throws Exception {
         out.writeInt(CoolProtocol.magicNumber);
 
+        out.writeInt(msg.op);
         out.writeInt(msg.filenameLength);
         out.writeInt(msg.contentLength);
 

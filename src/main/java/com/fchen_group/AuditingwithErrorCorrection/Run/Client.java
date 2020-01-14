@@ -125,7 +125,7 @@ public class Client {
             paritysFOS.close();
 
             // send file
-            CoolProtocol coolProtocol = new CoolProtocol(filePath.getBytes(), "".getBytes());
+            CoolProtocol coolProtocol = new CoolProtocol(0, filePath.getBytes(), "".getBytes());
             ctx.writeAndFlush(coolProtocol);
         }
 
@@ -135,11 +135,18 @@ public class Client {
             // CoolProtocol body = (CoolProtocol) msg;
             // System.out.println("Client接受的客户端的信息 :" + body.toString());
             // ctx.close();
+            String propertiesFilePath = filePath + ".properties";
+            String paritysFilePath = filePath + ".paritys";
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
-            CoolProtocol coolProtocol = new CoolProtocol(coolProtocolReceived.filename, "".getBytes());
-            ctx.writeAndFlush(coolProtocol);
-            if ((new String(coolProtocol.filename)).equals(filePath + ".paritys"))
+
+            if (coolProtocolReceived.op == 0) {
+                CoolProtocol coolProtocol = new CoolProtocol(1, propertiesFilePath.getBytes(), "".getBytes());
+                ctx.writeAndFlush(coolProtocol);
+            } else if (coolProtocolReceived.op == 1) {
+                CoolProtocol coolProtocol = new CoolProtocol(2, paritysFilePath.getBytes(), "".getBytes());
+                ctx.writeAndFlush(coolProtocol);
                 ctx.close();
+            }
         }
 
         @Override
@@ -176,7 +183,7 @@ public class Client {
             out.close();
             challengeFOS.close();
 
-            CoolProtocol coolProtocol = new CoolProtocol(challengeFilePath.getBytes(), "".getBytes());
+            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes(), "".getBytes());
             ctx.writeAndFlush(coolProtocol);
         }
 

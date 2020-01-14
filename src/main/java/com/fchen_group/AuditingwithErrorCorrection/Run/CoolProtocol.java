@@ -8,12 +8,14 @@ import java.io.IOException;
 public class CoolProtocol {
     public static int magicNumber = 329;
 
+    public int op;
     public int filenameLength;
     public int contentLength;
     public byte[] filename;
     public byte[] content;
 
-    public CoolProtocol(byte[] filename, byte[] content) {
+    public CoolProtocol(int op, byte[] filename, byte[] content) {
+        this.op = op;
         this.filenameLength = filename.length;
         this.contentLength = content.length;
 

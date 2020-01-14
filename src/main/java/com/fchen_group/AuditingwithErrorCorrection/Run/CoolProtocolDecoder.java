@@ -47,6 +47,7 @@ public class CoolProtocolDecoder extends ByteToMessageDecoder {
             }
 
             // 消息的长度
+            int op = buffer.readInt();
             int filenameLength = buffer.readInt();
             int contentLength = buffer.readInt();
             // System.out.printf("buffer.readableBytes(): %d\n", buffer.readableBytes());
@@ -64,7 +65,7 @@ public class CoolProtocolDecoder extends ByteToMessageDecoder {
             byte[] content = new byte[contentLength];
             buffer.readBytes(content);
 
-            CoolProtocol protocol = new CoolProtocol(filename, content);
+            CoolProtocol protocol = new CoolProtocol(op, filename, content);
             out.add(protocol);
         }
     }
