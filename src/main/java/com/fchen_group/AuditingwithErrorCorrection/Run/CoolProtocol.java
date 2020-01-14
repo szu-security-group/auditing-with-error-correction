@@ -14,10 +14,10 @@ public class CoolProtocol {
     public byte[] filename;
     public byte[] content;
 
-    public CoolProtocol(int op, byte[] filename, byte[] content) {
+    public CoolProtocol(int op, byte[] filename) {
         this.op = op;
         this.filenameLength = filename.length;
-        this.contentLength = content.length;
+        this.filename = filename;
 
         try {
             File file = new File(new String(filename));
@@ -25,12 +25,17 @@ public class CoolProtocol {
             this.content = new byte[(int) file.length()];
             this.contentLength = fileInputStream.read(this.content);
             fileInputStream.close();
-        } catch (FileNotFoundException e) {
-            this.contentLength = content.length;
-            this.content = content;
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public CoolProtocol(int op, byte[] filename, byte[] content) {
+        this.op = op;
+        this.filenameLength = filename.length;
+        this.filename = filename;
+        this.contentLength = content.length;
+        this.content = content;
     }
 
     @Override

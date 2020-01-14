@@ -125,7 +125,7 @@ public class Client {
             paritysFOS.close();
 
             // send file
-            CoolProtocol coolProtocol = new CoolProtocol(0, filePath.getBytes(), "".getBytes());
+            CoolProtocol coolProtocol = new CoolProtocol(0, filePath.getBytes());
             ctx.writeAndFlush(coolProtocol);
         }
 
@@ -140,10 +140,10 @@ public class Client {
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
 
             if (coolProtocolReceived.op == 0) {
-                CoolProtocol coolProtocol = new CoolProtocol(1, propertiesFilePath.getBytes(), "".getBytes());
+                CoolProtocol coolProtocol = new CoolProtocol(1, propertiesFilePath.getBytes());
                 ctx.writeAndFlush(coolProtocol);
             } else if (coolProtocolReceived.op == 1) {
-                CoolProtocol coolProtocol = new CoolProtocol(2, paritysFilePath.getBytes(), "".getBytes());
+                CoolProtocol coolProtocol = new CoolProtocol(2, paritysFilePath.getBytes());
                 ctx.writeAndFlush(coolProtocol);
                 ctx.close();
             }
@@ -183,7 +183,7 @@ public class Client {
             out.close();
             challengeFOS.close();
 
-            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes(), "".getBytes());
+            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes());
             ctx.writeAndFlush(coolProtocol);
         }
 

@@ -97,7 +97,7 @@ public class Server {
                     System.arraycopy(coolProtocolReceived.filename, 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
                     prove(filePath);
-                    coolProtocol = new CoolProtocol(5, (filePath + ".proof").getBytes(), "".getBytes());
+                    coolProtocol = new CoolProtocol(5, (filePath + ".proof").getBytes());
                     ctx.writeAndFlush(coolProtocol);
                     break;
                 default:
