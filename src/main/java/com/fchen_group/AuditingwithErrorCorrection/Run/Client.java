@@ -2,6 +2,7 @@ package com.fchen_group.AuditingwithErrorCorrection.Run;
 
 import java.io.*;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -231,11 +232,14 @@ public class Client {
             // get challenge data
             ChallengeData challengeData = null;
             try {
-                FileInputStream challengeFIS = new FileInputStream(challengeFilePath);
+                File challengeFile = new File(challengeFilePath);
+                FileInputStream challengeFIS = new FileInputStream(challengeFile);
                 ObjectInputStream in = new ObjectInputStream(challengeFIS);
                 challengeData = (ChallengeData) in.readObject();
                 in.close();
                 challengeFIS.close();
+                TimeUnit.SECONDS.sleep(3);
+                challengeFile.delete();
 
                 System.out.println("challenge");
                 print(challengeData.coefficients);

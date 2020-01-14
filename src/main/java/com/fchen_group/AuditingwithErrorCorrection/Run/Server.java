@@ -6,6 +6,7 @@ import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
 
 import java.io.*;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
@@ -101,8 +102,11 @@ public class Server {
                     System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
                     prove(filePath);
-                    coolProtocol = new CoolProtocol(5, (pathPrefix + filePath + ".proof").getBytes());
+                    String proofFilePath = pathPrefix + filePath + ".proof";
+                    coolProtocol = new CoolProtocol(5, proofFilePath.getBytes());
                     ctx.writeAndFlush(coolProtocol);
+                    TimeUnit.SECONDS.sleep(3);
+                    (new File(proofFilePath)).delete();
                     break;
                 default:
                     System.out.println("Invalid op");
@@ -127,11 +131,13 @@ public class Server {
         // get challenge data
         ChallengeData challengeData = null;
         try {
-            FileInputStream challengeFIS = new FileInputStream(challengeFilePath);
+            File challengeFile = new File(challengeFilePath);
+            FileInputStream challengeFIS = new FileInputStream(challengeFile);
             ObjectInputStream in = new ObjectInputStream(challengeFIS);
             challengeData = (ChallengeData) in.readObject();
             in.close();
             challengeFIS.close();
+            challengeFile.delete();
 
             System.out.println("challenge");
             print(challengeData.coefficients);
