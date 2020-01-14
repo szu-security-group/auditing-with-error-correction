@@ -18,11 +18,14 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 public class Server {
+    private String pathPrefix;
+
     public static void main(String[] args) throws Exception {
-        new Server().run();
+        new Server(args[0]).run();
     }
 
-    public Server() {
+    public Server(String pathPrefix) {
+        this.pathPrefix = pathPrefix;
     }
 
     public void run() throws Exception {
@@ -67,7 +70,8 @@ public class Server {
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
             
             // store file
-            File file = new File(new String(coolProtocolReceived.filename));
+            String filename = (new File(new String(coolProtocolReceived.filename))).getName();
+            File file = new File(pathPrefix + filename);
             file.createNewFile();
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             fileOutputStream.write(coolProtocolReceived.content);
@@ -75,29 +79,29 @@ public class Server {
 
             switch (coolProtocolReceived.op) {
                 case 0:
-                    filePathLength = coolProtocolReceived.filename.length;
+                    filePathLength = filename.length();
                 case 1:
                     if (filePathLength == 0) {
-                        filePathLength = coolProtocolReceived.filename.length - ".properties".length();
+                        filePathLength = filename.length() - ".properties".length();
                     }
                 case 2:
                     if (filePathLength == 0) {
-                        filePathLength = coolProtocolReceived.filename.length - ".paritys".length();
+                        filePathLength = filename.length() - ".paritys".length();
                     }
 
                     filePathBytes = new byte[filePathLength];
-                    System.arraycopy(coolProtocolReceived.filename, 0, filePathBytes, 0, filePathLength);
+                    System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
                     coolProtocol = new CoolProtocol(coolProtocolReceived.op, filePath.getBytes(), "".getBytes());
                     ctx.writeAndFlush(coolProtocol);
                     break;
                 case 3:
-                    filePathLength = coolProtocolReceived.filename.length - ".challenge".length();
+                    filePathLength = filename.length() - ".challenge".length();
                     filePathBytes = new byte[filePathLength];
-                    System.arraycopy(coolProtocolReceived.filename, 0, filePathBytes, 0, filePathLength);
+                    System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
                     prove(filePath);
-                    coolProtocol = new CoolProtocol(5, (filePath + ".proof").getBytes());
+                    coolProtocol = new CoolProtocol(5, (pathPrefix + filePath + ".proof").getBytes());
                     ctx.writeAndFlush(coolProtocol);
                     break;
                 default:
@@ -107,6 +111,7 @@ public class Server {
     }
 
     public void prove(String filePath) throws Exception {
+        filePath = pathPrefix + filePath;
         String propertiesFilePath = filePath + ".properties";
         String paritysFilePath = filePath + ".paritys";
         String challengeFilePath = filePath + ".challenge";
