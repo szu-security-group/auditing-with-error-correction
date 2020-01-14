@@ -248,6 +248,7 @@ public class Client {
                 proof = (ProofData) in.readObject();
                 in.close();
                 proofFIS.close();
+                (new File(proofFilePath)).delete();
 
                 System.out.println("proof");
                 print(proof.dataproof);
