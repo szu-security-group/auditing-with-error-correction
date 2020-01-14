@@ -3,9 +3,18 @@ package com.fchen_group.AuditingwithErrorCorrection.main;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.Random;
 
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.region.Region;
+import com.qcloud.cos.model.GetObjectRequest;
 import com.javamex.classmexer.MemoryUtil;
 
 import com.fchen_group.AuditingwithErrorCorrection.ReedSolomon.Galois;
@@ -150,6 +159,105 @@ public class AuditingwithErrorCorrection {
             //Calculate c_j . σ_ij
             for (int k = 0; k < PARITY_SHARDS; k++) {
                 tempp[k] = Galois.multiply(challenge.coefficients[i], paritys[j][k]);
+            }
+
+            for (int k = 0; k < DATA_SHARDS; k++) {
+                dataproof[k] = Galois.add(dataproof[k], tempm[k]);
+            }
+            for (int k = 0; k < PARITY_SHARDS; k++) {
+                parityproof[k] = Galois.add(parityproof[k], tempp[k]);
+            }
+        }
+
+        return new ProofData(dataproof, parityproof);
+    }
+
+    /**
+     * When the server receives the chal, it calculates the corresponding Proof
+     * Get file data from COS
+     *
+     * @param challenge
+     * @return
+     */
+    public ProofData prove(ChallengeData challenge, String COSConfigFilePath, String cloudFileName) {
+        byte[] dataproof = new byte[DATA_SHARDS];
+        byte[] parityproof = new byte[PARITY_SHARDS];
+
+        // initial cos
+        // 从配置文件获取 secretId, secretKey
+        String secretId = "";
+        String secretKey = "";
+        try {
+            FileInputStream propertiesFIS = new FileInputStream(COSConfigFilePath);
+            Properties properties = new Properties();
+            properties.load(propertiesFIS);
+            propertiesFIS.close();
+            secretId = properties.getProperty("secretId");
+            secretKey = properties.getProperty("secretKey");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // 初始化用户身份信息（secretId, secretKey）。
+        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
+        // 设置 bucket 的区域
+        Region region = new Region("ap-chengdu");
+        ClientConfig clientConfig = new ClientConfig(region);
+        // 生成 cos 客户端。
+        COSClient cosClient = new COSClient(cred, clientConfig);
+        // 设置 BucketName-APPID
+        String bucketName = "crypto2019-1254094112";
+        // 声明下载文件所需变量
+        GetObjectRequest getObjectRequest;
+        COSObject cosObject;
+        InputStream cloudFileIn;
+
+        for (int i = 0; i < challenge.coefficients.length; i++) {
+            //The index of the data block being audited
+            int j = challenge.index[i];
+            if (i % 10 == 0)
+                System.out.printf("Round %d: block index = %d\n", i, j);
+
+            // get original data from cloud
+            byte[] originalDataCloud = new byte[DATA_SHARDS];
+            getObjectRequest = new GetObjectRequest(bucketName, cloudFileName);
+            getObjectRequest.setRange(DATA_SHARDS * j, DATA_SHARDS * (j + 1) - 1);
+            cosObject = cosClient.getObject(getObjectRequest);
+            cloudFileIn = cosObject.getObjectContent();
+            try {
+                for (int n = 0; n != -1; ) {
+                    n = cloudFileIn.read(originalDataCloud, 0, originalDataCloud.length);
+                }
+                cloudFileIn.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            // get paritys data from cloud
+            byte[] paritysCloud = new byte[PARITY_SHARDS];
+            getObjectRequest = new GetObjectRequest(bucketName, cloudFileName + ".paritys");
+            getObjectRequest.setRange(PARITY_SHARDS * j, PARITY_SHARDS * (j + 1) - 1);
+            cosObject = cosClient.getObject(getObjectRequest);
+            cloudFileIn = cosObject.getObjectContent();
+            try {
+                for (int n = 0; n != -1; ) {
+                    n = cloudFileIn.read(paritysCloud, 0, paritysCloud.length);
+                }
+                cloudFileIn.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            byte[] tempm = new byte[DATA_SHARDS];
+            byte[] tempp = new byte[PARITY_SHARDS];
+            //Calculate c_j . m_ij
+            for (int k = 0; k < DATA_SHARDS; k++) {
+                if (originaldata[j][k] != originalDataCloud[k]) System.out.println("====== Different ! ======");
+                tempm[k] = Galois.multiply(challenge.coefficients[i], originalDataCloud[k]);  // originaldata[j][k] == originalDataCloud[k]
+            }
+            //Calculate c_j . σ_ij
+            for (int k = 0; k < PARITY_SHARDS; k++) {
+                if (paritys[j][k] != paritysCloud[k]) System.out.println("====== Different ! ======");
+                tempp[k] = Galois.multiply(challenge.coefficients[i], paritysCloud[k]);  // paritys[j][k] == paritysCloud[k]
             }
 
             for (int k = 0; k < DATA_SHARDS; k++) {

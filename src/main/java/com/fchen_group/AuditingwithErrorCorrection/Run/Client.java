@@ -188,7 +188,8 @@ public class Client {
         public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
             // receive proof file
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
-            File file = new File(new String(coolProtocolReceived.filename));
+            String receivedFilename = (new File(new String(coolProtocolReceived.filename))).getName();
+            File file = new File(filePath + ".proof");
             file.createNewFile();
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             fileOutputStream.write(coolProtocolReceived.content);
@@ -198,7 +199,7 @@ public class Client {
             String propertiesFilePath = filePath + ".properties";
             String challengeFilePath = filePath + ".challenge";
             String keyFilePath = filePath + ".key";
-            String proofFilePath = new String(coolProtocolReceived.filename);
+            String proofFilePath = filePath + ".proof";
 
             boolean verifyResult = false;
 

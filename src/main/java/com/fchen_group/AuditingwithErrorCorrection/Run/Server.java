@@ -9,6 +9,12 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.ClientConfig;
+import com.qcloud.cos.auth.COSCredentials;
+import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.region.Region;
+import com.qcloud.cos.model.PutObjectResult;
 
 import com.fchen_group.AuditingwithErrorCorrection.main.AuditingwithErrorCorrection;
 import com.fchen_group.AuditingwithErrorCorrection.main.ChallengeData;
@@ -16,17 +22,19 @@ import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
 
 public class Server {
     private String pathPrefix;
+    private String COSConfigFilePath;
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            new Server(args[0]).run();
+        if (args.length == 2) {
+            new Server(args[0], args[1]).run();
         } else {
             System.out.println("show help");
         }
     }
 
-    public Server(String pathPrefix) {
+    public Server(String pathPrefix, String COSConfigFilePath) {
         this.pathPrefix = pathPrefix;
+        this.COSConfigFilePath = COSConfigFilePath;
     }
 
     public void run() throws Exception {
@@ -75,6 +83,7 @@ public class Server {
             FileOutputStream fileOutputStream = new FileOutputStream(file);
             fileOutputStream.write(coolProtocolReceived.content);
             fileOutputStream.close();
+            uploadFile(pathPrefix + filename, filename);
 
             switch (coolProtocolReceived.op) {
                 case 0:
@@ -113,8 +122,37 @@ public class Server {
         }
     }
 
+    public void uploadFile(String localFileName, String cloudFileName) {
+        // 从配置文件获取 secretId, secretKey
+        String secretId = "";
+        String secretKey = "";
+        try {
+            FileInputStream propertiesFIS = new FileInputStream(COSConfigFilePath);
+            Properties properties = new Properties();
+            properties.load(propertiesFIS);
+            propertiesFIS.close();
+            secretId = properties.getProperty("secretId");
+            secretKey = properties.getProperty("secretKey");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // 初始化用户身份信息（secretId, secretKey）。
+        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
+        // 设置 bucket 的区域
+        Region region = new Region("ap-chengdu");
+        ClientConfig clientConfig = new ClientConfig(region);
+        // 生成 cos 客户端。
+        COSClient cosClient = new COSClient(cred, clientConfig);
+        // 设置 BucketName-APPID
+        String bucketName = "crypto2019-1254094112";
+
+        File localFile = new File(localFileName);
+        PutObjectResult putObjectResult = cosClient.putObject(bucketName, cloudFileName, localFile);
+    }
+
     public void prove(String filePath) throws Exception {
-        filePath = pathPrefix + filePath;
+        String filename = filePath;
+        filePath = pathPrefix + filename;
         String propertiesFilePath = filePath + ".properties";
         String paritysFilePath = filePath + ".paritys";
         String challengeFilePath = filePath + ".challenge";
@@ -161,7 +199,7 @@ public class Server {
 
         // calc Proof
         ProofData proof = null;
-        proof = auditingwithErrorCorrection.prove(challengeData);
+        proof = auditingwithErrorCorrection.prove(challengeData, COSConfigFilePath, filename);
 
         // store Proof
         FileOutputStream proofFOS = new FileOutputStream(proofFilePath);
