@@ -25,8 +25,7 @@ public class AuditingwithErrorCorrection {
     private final int PARITY_SHARDS;           //Amount of fault tolerance n-k
     private final int SHARD_NUMBER;             //The total number of data blocks F/n
 
-    private String Key;
-    private String sKey;
+    private Key key;
 
     public final int BYTES_IN_INT = 4;
     public byte[][] paritys;                  //paritys
@@ -78,9 +77,7 @@ public class AuditingwithErrorCorrection {
             s.append(chars.charAt(sRandom.nextInt(chars.length())));
         }
 
-        // K = (Key, sKey)
-        this.Key = k.toString();
-        this.sKey = s.toString();
+        key = new Key(k.toString(), s.toString());
     }
 
     /**
@@ -96,7 +93,7 @@ public class AuditingwithErrorCorrection {
 
         // Add a secret key
         for (int i = 0; i < paritys.length; i++) {
-            byte[] spkey = sKey.getBytes();
+            byte[] spkey = key.s.getBytes();
             if (spkey.length != paritys[i].length) {
                 System.out.println("Error:The length of s is inconsistent with that of paritys.length.");
                 continue;
@@ -108,7 +105,7 @@ public class AuditingwithErrorCorrection {
 
         // Add a pseudo random number
         for (int i = 0; i < paritys.length; i++) {
-            byte[] randoms = PseudoRandom.generateRandom(i, this.Key, PARITY_SHARDS);
+            byte[] randoms = PseudoRandom.generateRandom(i, key.k, PARITY_SHARDS);
             // For each parity adding a pseudo random number
             for (int j = 0; j < PARITY_SHARDS; j++) {
                 paritys[i][j] = Galois.add(paritys[i][j], randoms[j]);
@@ -286,7 +283,7 @@ public class AuditingwithErrorCorrection {
         byte[] sumtemp = new byte[PARITY_SHARDS];
         for (int i = 0; i < challenge.index.length; i++) {
             //Generate AES(i_j) based on the index and key
-            byte[] AESRandom = PseudoRandom.generateRandom(challenge.index[i], this.Key, PARITY_SHARDS);
+            byte[] AESRandom = PseudoRandom.generateRandom(challenge.index[i], key.k, PARITY_SHARDS);
             //System.out.println("Index:"+challenge.index[i]+" this length:"+PARITY_SHARDS);
             //The length of the AESRandom[] might be longer than PARITY_SHARDS, here only the PARITY_SHARDS byte is needed
             byte[] temp = new byte[PARITY_SHARDS];
@@ -308,7 +305,7 @@ public class AuditingwithErrorCorrection {
 
         //Divided by the secret key s
         for (int j = 0; j < PARITY_SHARDS; j++) {
-            byte[] spkey = sKey.getBytes();
+            byte[] spkey = key.s.getBytes();
             verifyparity[j] = Galois.divide(verifyparity[j], spkey[j]);
         }
 
@@ -371,19 +368,11 @@ public class AuditingwithErrorCorrection {
         return PARITY_SHARDS;
     }
 
-    public String getKey() {
-        return Key;
+    public Key getKey() {
+        return key;
     }
 
-    public String getsKey() {
-        return sKey;
-    }
-
-    public void setKey(String Key) {
-        this.Key = Key;
-    }
-
-    public void setsKey(String sKey) {
-        this.sKey = sKey;
+    public void setKey(Key key) {
+        this.key = key;
     }
 }

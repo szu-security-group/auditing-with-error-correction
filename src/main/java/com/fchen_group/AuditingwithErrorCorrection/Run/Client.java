@@ -4,6 +4,7 @@ import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import com.fchen_group.AuditingwithErrorCorrection.main.Key;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -105,8 +106,8 @@ public class Client {
                 keyFile.createNewFile();
             FileOutputStream keyFOS = new FileOutputStream(keyFile);
             Properties key = new Properties();
-            key.setProperty("Key", auditingwithErrorCorrection.getKey());
-            key.setProperty("sKey", auditingwithErrorCorrection.getsKey());
+            key.setProperty("k", auditingwithErrorCorrection.getKey().k);
+            key.setProperty("s", auditingwithErrorCorrection.getKey().s);
             key.store(keyFOS, "key = (Key, sKey)");
             keyFOS.close();
 
@@ -217,10 +218,7 @@ public class Client {
             Properties key = new Properties();
             key.load(keyFIS);
             keyFIS.close();
-            String Key = key.getProperty("Key");
-            String sKey = key.getProperty("sKey");
-            auditingwithErrorCorrection.setKey(Key);
-            auditingwithErrorCorrection.setsKey(sKey);
+            auditingwithErrorCorrection.setKey(new Key(key.getProperty("k"), key.getProperty("s")));
 
             // get challenge data
             ChallengeData challengeData = null;
