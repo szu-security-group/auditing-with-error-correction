@@ -145,6 +145,7 @@ public class Client {
             } else if (coolProtocolReceived.op == 1) {
                 CoolProtocol coolProtocol = new CoolProtocol(2, paritysFilePath.getBytes());
                 ctx.writeAndFlush(coolProtocol);
+            } else if (coolProtocolReceived.op == 2) {
                 ctx.close();
             }
         }
