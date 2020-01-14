@@ -1,28 +1,28 @@
 package com.fchen_group.AuditingwithErrorCorrection.Run;
 
-import com.fchen_group.AuditingwithErrorCorrection.main.AuditingwithErrorCorrection;
-import com.fchen_group.AuditingwithErrorCorrection.main.ChallengeData;
-import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
-
 import java.io.*;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
+
+import com.fchen_group.AuditingwithErrorCorrection.main.AuditingwithErrorCorrection;
+import com.fchen_group.AuditingwithErrorCorrection.main.ChallengeData;
+import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
 
 public class Server {
     private String pathPrefix;
 
     public static void main(String[] args) throws Exception {
-        new Server(args[0]).run();
+        if (args.length != 1) {
+            new Server(args[0]).run();
+        } else {
+            System.out.println("show help");
+        }
     }
 
     public Server(String pathPrefix) {
@@ -38,22 +38,20 @@ public class Server {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class)
-                    .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             // 添加自定义协议的编解码工具
                             ch.pipeline().addLast(new CoolProtocolEncoder());
                             ch.pipeline().addLast(new CoolProtocolDecoder());
-                            // 处理网络IO
+                            // 处理服务器端操作
                             ch.pipeline().addLast(new ServerHandler());
                         }
                     })
                     .option(ChannelOption.SO_BACKLOG, 1024) // 设置tcp缓冲区
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
-            // 绑定端口 同步等待绑定成功
+
             ChannelFuture f = b.bind(9999).sync();
-            // 等到服务端监听端口关闭
             f.channel().closeFuture().sync();
         } finally {
             workerGroup.shutdownGracefully();
@@ -69,7 +67,7 @@ public class Server {
             String filePath = "";
             CoolProtocol coolProtocol;
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
-            
+
             // store file
             String filename = (new File(new String(coolProtocolReceived.filename))).getName();
             File file = new File(pathPrefix + filename);
@@ -89,13 +87,13 @@ public class Server {
                     if (filePathLength == 0) {
                         filePathLength = filename.length() - ".paritys".length();
                     }
-
                     filePathBytes = new byte[filePathLength];
                     System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
                     coolProtocol = new CoolProtocol(coolProtocolReceived.op, filePath.getBytes(), "".getBytes());
                     ctx.writeAndFlush(coolProtocol);
                     break;
+
                 case 3:
                     filePathLength = filename.length() - ".challenge".length();
                     filePathBytes = new byte[filePathLength];
@@ -108,6 +106,7 @@ public class Server {
                     TimeUnit.SECONDS.sleep(3);
                     (new File(proofFilePath)).delete();
                     break;
+
                 default:
                     System.out.println("Invalid op");
             }

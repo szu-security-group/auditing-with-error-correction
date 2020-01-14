@@ -10,8 +10,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
-import com.javamex.classmexer.MemoryUtil;
-
 import com.fchen_group.AuditingwithErrorCorrection.main.AuditingwithErrorCorrection;
 import com.fchen_group.AuditingwithErrorCorrection.main.ChallengeData;
 import com.fchen_group.AuditingwithErrorCorrection.main.ProofData;
@@ -53,26 +51,24 @@ public class Client {
         try {
             // 客户端辅助启动类 对客户端配置
             Bootstrap b = new Bootstrap();
-            b.group(group)//
-                    .channel(NioSocketChannel.class)//
-                    .option(ChannelOption.TCP_NODELAY, true)//
+            b.group(group)
+                    .channel(NioSocketChannel.class)
                     .handler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) {
                             // 添加自定义协议的编解码工具
                             ch.pipeline().addLast(new CoolProtocolEncoder());
                             ch.pipeline().addLast(new CoolProtocolDecoder());
-                            // 处理网络IO
+                            // 处理客户端操作
                             if (command.equals("outsource"))
                                 ch.pipeline().addLast(new ClientOutsourceHandler());
                             else
                                 ch.pipeline().addLast(new ClientAuditHandler());
                         }
-                    });//
-            // 异步链接服务器 同步等待链接成功
-            ChannelFuture f = b.connect("localhost", 9999).sync();
+                    })
+                    .option(ChannelOption.TCP_NODELAY, true);
 
-            // 等待链接关闭
+            ChannelFuture f = b.connect("localhost", 9999).sync();
             f.channel().closeFuture().sync();
 
         } finally {
@@ -87,7 +83,7 @@ public class Client {
             String keyFilePath = filePath + ".key";
             String paritysFilePath = filePath + ".paritys";
 
-            // parse args (n, k) and write them to properties
+            // parse args (n, k) and store them to
             File propertiesFile = new File(propertiesFilePath);
             propertiesFile.createNewFile();
             FileOutputStream propertiesFOS = new FileOutputStream(propertiesFile);
@@ -117,13 +113,13 @@ public class Client {
             System.out.println("outsource");
             print(auditingwithErrorCorrection.paritys);
 
-            // write paritys to file
+            // store paritys
             File paritysFile = new File(paritysFilePath);
             if (!paritysFile.exists())
                 paritysFile.createNewFile();
             FileOutputStream paritysFOS = new FileOutputStream(paritysFile);
             for (int i = 0; i < auditingwithErrorCorrection.paritys.length; i++) {
-                //按行存储，一行相当与一个parity块
+                //按行存储，一行相当与一个 parity 块
                 paritysFOS.write(auditingwithErrorCorrection.paritys[i]);
             }
             paritysFOS.close();
@@ -135,10 +131,6 @@ public class Client {
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-            // receive message example
-            // CoolProtocol body = (CoolProtocol) msg;
-            // System.out.println("Client接受的客户端的信息 :" + body.toString());
-            // ctx.close();
             String propertiesFilePath = filePath + ".properties";
             String paritysFilePath = filePath + ".paritys";
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
