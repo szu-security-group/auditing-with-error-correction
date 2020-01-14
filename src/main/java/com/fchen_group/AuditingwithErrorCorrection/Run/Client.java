@@ -32,13 +32,16 @@ public class Client {
     }
 
     public Client(String command, String filePath) {
-        this.command = command;
-        this.filePath = filePath;
+        this(command, filePath, 0, 0);
     }
 
     public Client(String command, String filePath, int n, int k) {
         this.command = command;
-        this.filePath = filePath;
+        try {
+            this.filePath = (new File(filePath)).getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         this.n = n;
         this.k = k;
     }
