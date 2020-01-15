@@ -191,9 +191,13 @@ public class AuditingwithErrorCorrection extends AbstractAudit {
      * When the server receives the chal, it calculates the corresponding Proof
      * Get file data from COS
      *
-     * @param challenge
+     * @param
      * @return
      */
+    public ProofData prove(byte[][] paritys, ChallengeData challengeData, String COSConfigFilePath, String cloudFileName) {
+        this.paritys = paritys;
+        return prove(challengeData, COSConfigFilePath, cloudFileName);
+    }
     public ProofData prove(ChallengeData challenge, String COSConfigFilePath, String cloudFileName) {
         byte[] dataproof = new byte[DATA_SHARDS];
         byte[] parityproof = new byte[PARITY_SHARDS];

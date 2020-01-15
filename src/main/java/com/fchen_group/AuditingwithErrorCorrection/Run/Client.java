@@ -95,11 +95,9 @@ public class Client {
                     "k: the message length of Reed-Solomon codes k");
             propertiesFOS.close();
 
-            // outsource
+            // keyGen
             AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
             Key key = auditingwithErrorCorrection.keyGen();
-            auditingwithErrorCorrection.outsource();
-
             // store key
             File keyFile = new File(keyFilePath);
             if (!keyFile.exists())
@@ -111,17 +109,16 @@ public class Client {
             keyProperties.store(keyFOS, "key = (Key, sKey)");
             keyFOS.close();
 
-            System.out.println("outsource");
-            print(auditingwithErrorCorrection.paritys);
-
+            // outsource
+            byte[][] paritys = auditingwithErrorCorrection.outsource(key);
             // store paritys
             File paritysFile = new File(paritysFilePath);
             if (!paritysFile.exists())
                 paritysFile.createNewFile();
             FileOutputStream paritysFOS = new FileOutputStream(paritysFile);
-            for (int i = 0; i < auditingwithErrorCorrection.paritys.length; i++) {
+            for (int i = 0; i < paritys.length; i++) {
                 //按行存储，一行相当与一个 parity 块
-                paritysFOS.write(auditingwithErrorCorrection.paritys[i]);
+                paritysFOS.write(paritys[i]);
             }
             paritysFOS.close();
 
@@ -159,7 +156,9 @@ public class Client {
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
             String propertiesFilePath = filePath + ".properties";
             String challengeFilePath = filePath + ".challenge";
+            String keyFilePath = filePath + ".key";
 
+            // get n and k
             FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
             Properties properties = new Properties();
             properties.load(propertiesFIS);
@@ -167,9 +166,16 @@ public class Client {
             int n = Integer.parseInt(properties.getProperty("n"));
             int k = Integer.parseInt(properties.getProperty("k"));
 
-            int challengeLen = 460;
+            // get key
             AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
-            ChallengeData challengeData = auditingwithErrorCorrection.audit(challengeLen);
+            FileInputStream keyFIS = new FileInputStream(keyFilePath);
+            Properties keyProperties = new Properties();
+            keyProperties.load(keyFIS);
+            keyFIS.close();
+            Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
+
+            // audit
+            ChallengeData challengeData = auditingwithErrorCorrection.audit(key);
 
             System.out.println("challenge");
             print(challengeData.coefficients);
@@ -202,8 +208,6 @@ public class Client {
             String keyFilePath = filePath + ".key";
             String proofFilePath = filePath + ".proof";
 
-            boolean verifyResult = false;
-
             // get n and k
             FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
             Properties properties = new Properties();
@@ -218,7 +222,7 @@ public class Client {
             Properties keyProperties = new Properties();
             keyProperties.load(keyFIS);
             keyFIS.close();
-            auditingwithErrorCorrection.setKey(new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s")));
+            Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
 
             // get challenge data
             ChallengeData challengeData = null;
@@ -241,25 +245,25 @@ public class Client {
             }
 
             // get proof data
-            ProofData proof = null;
+            ProofData proofData = null;
             try {
                 FileInputStream proofFIS = new FileInputStream(proofFilePath);
                 ObjectInputStream in = new ObjectInputStream(proofFIS);
-                proof = (ProofData) in.readObject();
+                proofData = (ProofData) in.readObject();
                 in.close();
                 proofFIS.close();
                 (new File(proofFilePath)).delete();
 
                 System.out.println("proof");
-                print(proof.dataproof);
-                print(proof.parityproof);
+                print(proofData.dataproof);
+                print(proofData.parityproof);
             } catch (ClassNotFoundException e) {
                 System.out.println("Class ChallengeData not found");
                 e.printStackTrace();
                 return;
             }
 
-            verifyResult = auditingwithErrorCorrection.verify(challengeData, proof);
+            boolean verifyResult = auditingwithErrorCorrection.verify(key, challengeData, proofData);
             if (verifyResult)
                 System.out.println("Verify pass");
             else

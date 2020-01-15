@@ -190,16 +190,15 @@ public class Server {
         int SHARD_NUMBER = auditingwithErrorCorrection.getSHARD_NUMBER(),
                 PARITY_SHARDS = auditingwithErrorCorrection.getPARITY_SHARDS();
         System.out.printf("SHARD_NUMBER: %d, PARITY_SHARDS: %d\n", SHARD_NUMBER, PARITY_SHARDS);
-        auditingwithErrorCorrection.paritys = new byte[SHARD_NUMBER][PARITY_SHARDS];
+        byte[][] paritys = new byte[SHARD_NUMBER][PARITY_SHARDS];
         for (int i = 0; i < SHARD_NUMBER; i++) {
             //按行存储，一行相当与一个parity块
-            paritysFIS.read(auditingwithErrorCorrection.paritys[i], 0, PARITY_SHARDS);
+            paritysFIS.read(paritys[i], 0, PARITY_SHARDS);
         }
         paritysFIS.close();
 
         // calc Proof
-        ProofData proof = null;
-        proof = auditingwithErrorCorrection.prove(challengeData, COSConfigFilePath, filename);
+        ProofData proof = auditingwithErrorCorrection.prove(paritys, challengeData, COSConfigFilePath, filename);
 
         // store Proof
         FileOutputStream proofFOS = new FileOutputStream(proofFilePath);
