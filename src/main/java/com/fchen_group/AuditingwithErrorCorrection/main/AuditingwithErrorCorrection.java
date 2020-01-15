@@ -20,7 +20,7 @@ import com.javamex.classmexer.MemoryUtil;
 import com.fchen_group.AuditingwithErrorCorrection.ReedSolomon.Galois;
 import com.fchen_group.AuditingwithErrorCorrection.ReedSolomon.ReedSolomon;
 
-public class AuditingwithErrorCorrection {
+public class AuditingwithErrorCorrection extends AbstractAudit {
     private final int DATA_SHARDS;             //message length k
     private final int PARITY_SHARDS;           //Amount of fault tolerance n-k
     private final int SHARD_NUMBER;             //The total number of data blocks F/n
@@ -60,6 +60,7 @@ public class AuditingwithErrorCorrection {
     /**
      * Key generation function, executed only once
      */
+    @Override
     public Key keyGen() {
         String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -84,7 +85,11 @@ public class AuditingwithErrorCorrection {
     /**
      * Error-correcting coding of the source data
      */
-    public void outsource() {
+    @Override
+    public byte[][] outsource(Key key) {
+        return outsource();
+    }
+    public byte[][] outsource() {
         this.paritys = new byte[SHARD_NUMBER][];
         ReedSolomon reedSolomon = new ReedSolomon(DATA_SHARDS, PARITY_SHARDS);
         for (int i = 0; i < SHARD_NUMBER; i++) {
@@ -112,14 +117,20 @@ public class AuditingwithErrorCorrection {
                 paritys[i][j] = Galois.add(paritys[i][j], randoms[j]);
             }
         }
+
+        return paritys;
     }
 
     /**
      * Generate audit indexes and coefficients based on challenge length
      *
-     * @param challengeLen
+     * @param
      * @return
      */
+    @Override
+    public ChallengeData audit(Key key) {
+        return audit(460);
+    }
     public ChallengeData audit(int challengeLen) {
         //coefficients/GF(2^8),randomly generate 8 bits of random Numbers
         byte[] coefficients = new byte[challengeLen];
@@ -138,25 +149,31 @@ public class AuditingwithErrorCorrection {
     /**
      * When the server receives the chal, it calculates the corresponding Proof
      *
-     * @param challenge
+     * @param paritys
+     * @param challengeData
      * @return
      */
-    public ProofData prove(ChallengeData challenge) {
+    @Override
+    public ProofData prove(byte[][] paritys, ChallengeData challengeData) {
+        this.paritys = paritys;
+        return prove(challengeData);
+    }
+    public ProofData prove(ChallengeData challengeData) {
         byte[] dataproof = new byte[DATA_SHARDS];
         byte[] parityproof = new byte[PARITY_SHARDS];
 
-        for (int i = 0; i < challenge.coefficients.length; i++) {
+        for (int i = 0; i < challengeData.coefficients.length; i++) {
             //The index of the data block being audited
-            int j = challenge.index[i];
+            int j = challengeData.index[i];
             byte[] tempm = new byte[DATA_SHARDS];
             byte[] tempp = new byte[PARITY_SHARDS];
             //Calculate c_j . m_ij
             for (int k = 0; k < DATA_SHARDS; k++) {
-                tempm[k] = Galois.multiply(challenge.coefficients[i], originaldata[j][k]);
+                tempm[k] = Galois.multiply(challengeData.coefficients[i], originaldata[j][k]);
             }
             //Calculate c_j . σ_ij
             for (int k = 0; k < PARITY_SHARDS; k++) {
-                tempp[k] = Galois.multiply(challenge.coefficients[i], paritys[j][k]);
+                tempp[k] = Galois.multiply(challengeData.coefficients[i], paritys[j][k]);
             }
 
             for (int k = 0; k < DATA_SHARDS; k++) {
@@ -272,26 +289,32 @@ public class AuditingwithErrorCorrection {
     /**
      * Verify the correctness of proof returned from the cloud
      *
-     * @param challenge
-     * @param proof
+     * @param key
+     * @param challengeData
+     * @param proofData
      * @return
      */
-    public boolean verify(ChallengeData challenge, ProofData proof) {
+    @Override
+    public boolean verify(Key key, ChallengeData challengeData, ProofData proofData) {
+        this.key = key;
+        return verify(challengeData, proofData);
+    }
+    public boolean verify(ChallengeData challengeData, ProofData proofData) {
         byte[] verifyparity = new byte[PARITY_SHARDS];
         byte[] recomputeparity = new byte[PARITY_SHARDS];
 
         //Storage the sum of c_j . AES(i_j)
         byte[] sumtemp = new byte[PARITY_SHARDS];
-        for (int i = 0; i < challenge.index.length; i++) {
+        for (int i = 0; i < challengeData.index.length; i++) {
             //Generate AES(i_j) based on the index and key
-            byte[] AESRandom = PseudoRandom.generateRandom(challenge.index[i], key.k, PARITY_SHARDS);
+            byte[] AESRandom = PseudoRandom.generateRandom(challengeData.index[i], key.k, PARITY_SHARDS);
             //System.out.println("Index:"+challenge.index[i]+" this length:"+PARITY_SHARDS);
             //The length of the AESRandom[] might be longer than PARITY_SHARDS, here only the PARITY_SHARDS byte is needed
             byte[] temp = new byte[PARITY_SHARDS];
             for (int j = 0; j < PARITY_SHARDS; j++) {
                 //System.out.print(String.format("%02x ", AESRandom[j]));
                 //Calculate c_j . AES(i_j)
-                temp[j] = Galois.multiply(challenge.coefficients[i], AESRandom[j]);
+                temp[j] = Galois.multiply(challengeData.coefficients[i], AESRandom[j]);
             }
             //Calculate the sum of c_j . AES(i_j)
             for (int k = 0; k < PARITY_SHARDS; k++) {
@@ -301,7 +324,7 @@ public class AuditingwithErrorCorrection {
 
         // the parity for verification
         for (int i = 0; i < PARITY_SHARDS; i++) {
-            verifyparity[i] = Galois.subtract(proof.parityproof[i], sumtemp[i]);
+            verifyparity[i] = Galois.subtract(proofData.parityproof[i], sumtemp[i]);
         }
 
         //Divided by the secret key s
@@ -312,7 +335,7 @@ public class AuditingwithErrorCorrection {
 
         //Re-encode the returned data
         ReedSolomon reedSolomon = new ReedSolomon(DATA_SHARDS, PARITY_SHARDS);
-        recomputeparity = reedSolomon.encodeParity(proof.dataproof, 0, 1);
+        recomputeparity = reedSolomon.encodeParity(proofData.dataproof, 0, 1);
 
         //Determine if the two parity arrays are equal
         //System.out.println("This is result:"+comparebyteArray(verifyparity, recomputeparity));
