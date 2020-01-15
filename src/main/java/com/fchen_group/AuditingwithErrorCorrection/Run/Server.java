@@ -108,12 +108,10 @@ public class Server {
                     filePathBytes = new byte[filePathLength];
                     System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
-                    prove(filePath);
+                    ProofData proofData = prove(filePath);
                     String proofFilePath = pathPrefix + filePath + ".proof";
-                    coolProtocol = new CoolProtocol(5, proofFilePath.getBytes());
+                    coolProtocol = new CoolProtocol(5, proofFilePath.getBytes(), serialize(proofData));
                     ctx.writeAndFlush(coolProtocol);
-                    TimeUnit.SECONDS.sleep(3);
-                    (new File(proofFilePath)).delete();
                     break;
 
                 default:
@@ -150,7 +148,7 @@ public class Server {
         PutObjectResult putObjectResult = cosClient.putObject(bucketName, cloudFileName, localFile);
     }
 
-    public void prove(String filePath) throws Exception {
+    public ProofData prove(String filePath) throws Exception {
         String filename = filePath;
         filePath = pathPrefix + filename;
         String propertiesFilePath = filePath + ".properties";
@@ -181,7 +179,7 @@ public class Server {
         } catch (ClassNotFoundException e) {
             System.out.println("Class ChallengeData not found");
             e.printStackTrace();
-            return;
+            return null;
         }
         // get paritys
         File paritysFile = new File(paritysFilePath);
@@ -197,15 +195,8 @@ public class Server {
         }
         paritysFIS.close();
 
-        // calc Proof
-        ProofData proof = auditingwithErrorCorrection.prove(paritys, challengeData, COSConfigFilePath, filename);
-
-        // store Proof
-        FileOutputStream proofFOS = new FileOutputStream(proofFilePath);
-        ObjectOutputStream out = new ObjectOutputStream(proofFOS);
-        out.writeObject(proof);
-        out.close();
-        proofFOS.close();
+        // calc Proof and return
+        return auditingwithErrorCorrection.prove(paritys, challengeData, COSConfigFilePath, filename);
     }
 
     public static byte[] serialize(Object object) throws IOException {

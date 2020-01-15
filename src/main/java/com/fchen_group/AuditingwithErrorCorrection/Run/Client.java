@@ -195,12 +195,7 @@ public class Client {
         public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
             // receive proof file
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
-            String receivedFilename = (new File(new String(coolProtocolReceived.filename))).getName();
-            File file = new File(filePath + ".proof");
-            file.createNewFile();
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(coolProtocolReceived.content);
-            fileOutputStream.close();
+            ProofData proofData = (ProofData) deserialize(coolProtocolReceived.content);
             ctx.close();
 
             String propertiesFilePath = filePath + ".properties";
@@ -238,25 +233,6 @@ public class Client {
 
                 System.out.println("challenge");
                 print(challengeData.coefficients);
-            } catch (ClassNotFoundException e) {
-                System.out.println("Class ChallengeData not found");
-                e.printStackTrace();
-                return;
-            }
-
-            // get proof data
-            ProofData proofData = null;
-            try {
-                FileInputStream proofFIS = new FileInputStream(proofFilePath);
-                ObjectInputStream in = new ObjectInputStream(proofFIS);
-                proofData = (ProofData) in.readObject();
-                in.close();
-                proofFIS.close();
-                (new File(proofFilePath)).delete();
-
-                System.out.println("proof");
-                print(proofData.dataproof);
-                print(proofData.parityproof);
             } catch (ClassNotFoundException e) {
                 System.out.println("Class ChallengeData not found");
                 e.printStackTrace();
