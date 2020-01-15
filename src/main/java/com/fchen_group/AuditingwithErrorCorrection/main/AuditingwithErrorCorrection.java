@@ -60,7 +60,7 @@ public class AuditingwithErrorCorrection {
     /**
      * Key generation function, executed only once
      */
-    public void keyGen() {
+    public Key keyGen() {
         String chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
         // generate k
@@ -78,6 +78,7 @@ public class AuditingwithErrorCorrection {
         }
 
         key = new Key(k.toString(), s.toString());
+        return key;
     }
 
     /**

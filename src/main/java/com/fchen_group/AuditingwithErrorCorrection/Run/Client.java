@@ -97,7 +97,7 @@ public class Client {
 
             // outsource
             AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
-            auditingwithErrorCorrection.keyGen();
+            Key key = auditingwithErrorCorrection.keyGen();
             auditingwithErrorCorrection.outsource();
 
             // store key
@@ -105,10 +105,10 @@ public class Client {
             if (!keyFile.exists())
                 keyFile.createNewFile();
             FileOutputStream keyFOS = new FileOutputStream(keyFile);
-            Properties key = new Properties();
-            key.setProperty("k", auditingwithErrorCorrection.getKey().k);
-            key.setProperty("s", auditingwithErrorCorrection.getKey().s);
-            key.store(keyFOS, "key = (Key, sKey)");
+            Properties keyProperties = new Properties();
+            keyProperties.setProperty("k", key.k);
+            keyProperties.setProperty("s", key.s);
+            keyProperties.store(keyFOS, "key = (Key, sKey)");
             keyFOS.close();
 
             System.out.println("outsource");
@@ -215,10 +215,10 @@ public class Client {
             // get key
             AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
             FileInputStream keyFIS = new FileInputStream(keyFilePath);
-            Properties key = new Properties();
-            key.load(keyFIS);
+            Properties keyProperties = new Properties();
+            keyProperties.load(keyFIS);
             keyFIS.close();
-            auditingwithErrorCorrection.setKey(new Key(key.getProperty("k"), key.getProperty("s")));
+            auditingwithErrorCorrection.setKey(new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s")));
 
             // get challenge data
             ChallengeData challengeData = null;
