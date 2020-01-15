@@ -2,7 +2,6 @@ package com.fchen_group.AuditingwithErrorCorrection.Run;
 
 import java.io.*;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import com.fchen_group.AuditingwithErrorCorrection.main.Key;
 import io.netty.bootstrap.Bootstrap;
@@ -20,6 +19,11 @@ public class Client {
     private String filePath;
     private int n;
     private int k;
+    String propertiesFilePath;
+    String keyFilePath;
+    String paritysFilePath;
+    AuditingwithErrorCorrection auditingwithErrorCorrection;
+    private Key key;
     private ChallengeData challengeData;
 
     public static void main(String[] args) throws Exception {
@@ -45,6 +49,36 @@ public class Client {
         }
         this.n = n;
         this.k = k;
+        propertiesFilePath = this.filePath + ".properties";
+        keyFilePath = this.filePath + ".key";
+        paritysFilePath = this.filePath + ".paritys";
+        try {
+            // initial (n, k)
+            if ((new File(propertiesFilePath)).exists()) {
+                // get (n, k) from file
+                FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
+                Properties properties = new Properties();
+                properties.load(propertiesFIS);
+                propertiesFIS.close();
+                this.n = Integer.parseInt(properties.getProperty("n"));
+                this.k = Integer.parseInt(properties.getProperty("k"));
+            } else {
+                // store (n, k) to file
+                File propertiesFile = new File(propertiesFilePath);
+                propertiesFile.createNewFile();
+                FileOutputStream propertiesFOS = new FileOutputStream(propertiesFile);
+                Properties properties = new Properties();
+                properties.setProperty("n", String.valueOf(this.n));
+                properties.setProperty("k", String.valueOf(this.k));
+                properties.store(propertiesFOS, "n: the block length of Reed-Solomon codes\n" +
+                        "k: the message length of Reed-Solomon codes k");
+                propertiesFOS.close();
+            }
+            // initial auditingwithErrorCorrection
+            auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, this.n, this.k);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void run() throws Exception {
@@ -81,24 +115,8 @@ public class Client {
     class ClientOutsourceHandler extends SimpleChannelInboundHandler<Object> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            String propertiesFilePath = filePath + ".properties";
-            String keyFilePath = filePath + ".key";
-            String paritysFilePath = filePath + ".paritys";
-
-            // parse args (n, k) and store them to
-            File propertiesFile = new File(propertiesFilePath);
-            propertiesFile.createNewFile();
-            FileOutputStream propertiesFOS = new FileOutputStream(propertiesFile);
-            Properties properties = new Properties();
-            properties.setProperty("n", String.valueOf(n));
-            properties.setProperty("k", String.valueOf(k));
-            properties.store(propertiesFOS, "n: the block length of Reed-Solomon codes\n" +
-                    "k: the message length of Reed-Solomon codes k");
-            propertiesFOS.close();
-
             // keyGen
-            AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
-            Key key = auditingwithErrorCorrection.keyGen();
+            key = auditingwithErrorCorrection.keyGen();
             // store key
             File keyFile = new File(keyFilePath);
             if (!keyFile.exists())
@@ -117,9 +135,9 @@ public class Client {
             if (!paritysFile.exists())
                 paritysFile.createNewFile();
             FileOutputStream paritysFOS = new FileOutputStream(paritysFile);
-            for (int i = 0; i < paritys.length; i++) {
+            for (byte[] parity : paritys) {
                 //按行存储，一行相当与一个 parity 块
-                paritysFOS.write(paritys[i]);
+                paritysFOS.write(parity);
             }
             paritysFOS.close();
 
@@ -129,19 +147,17 @@ public class Client {
         }
 
         @Override
-        public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-            String propertiesFilePath = filePath + ".properties";
-            String paritysFilePath = filePath + ".paritys";
-            CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
-
-            if (coolProtocolReceived.op == 0) {
-                CoolProtocol coolProtocol = new CoolProtocol(1, propertiesFilePath.getBytes());
-                ctx.writeAndFlush(coolProtocol);
-            } else if (coolProtocolReceived.op == 1) {
-                CoolProtocol coolProtocol = new CoolProtocol(2, paritysFilePath.getBytes());
-                ctx.writeAndFlush(coolProtocol);
-            } else if (coolProtocolReceived.op == 2) {
-                ctx.close();
+        public void channelRead0(ChannelHandlerContext ctx, Object msg) {
+            switch (((CoolProtocol) msg).op) {
+                case 0:
+                    ctx.writeAndFlush(new CoolProtocol(1, propertiesFilePath.getBytes()));
+                    break;
+                case 1:
+                    ctx.writeAndFlush(new CoolProtocol(2, paritysFilePath.getBytes()));
+                    break;
+                case 2:
+                    ctx.close();
+                    break;
             }
         }
 
@@ -155,61 +171,24 @@ public class Client {
     class ClientAuditHandler extends SimpleChannelInboundHandler<Object> {
         @Override
         public void channelActive(ChannelHandlerContext ctx) throws Exception {
-            String propertiesFilePath = filePath + ".properties";
-            String challengeFilePath = filePath + ".challenge";
-            String keyFilePath = filePath + ".key";
-
-            // get n and k
-            FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
-            Properties properties = new Properties();
-            properties.load(propertiesFIS);
-            propertiesFIS.close();
-            int n = Integer.parseInt(properties.getProperty("n"));
-            int k = Integer.parseInt(properties.getProperty("k"));
-
             // get key
-            AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
             FileInputStream keyFIS = new FileInputStream(keyFilePath);
             Properties keyProperties = new Properties();
             keyProperties.load(keyFIS);
             keyFIS.close();
-            Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
+            key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
 
-            // audit
             challengeData = auditingwithErrorCorrection.audit(key);
-
-            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes(), serialize(challengeData));
+            CoolProtocol coolProtocol = new CoolProtocol(3, (filePath + ".challenge").getBytes(), serialize(challengeData));
             ctx.writeAndFlush(coolProtocol);
         }
 
         @Override
         public void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
-            // receive proof file
+            // receive proof data
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
             ProofData proofData = (ProofData) deserialize(coolProtocolReceived.content);
             ctx.close();
-
-            String propertiesFilePath = filePath + ".properties";
-            String challengeFilePath = filePath + ".challenge";
-            String keyFilePath = filePath + ".key";
-            String proofFilePath = filePath + ".proof";
-
-            // get n and k
-            FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
-            Properties properties = new Properties();
-            properties.load(propertiesFIS);
-            propertiesFIS.close();
-            int n = Integer.parseInt(properties.getProperty("n"));
-            int k = Integer.parseInt(properties.getProperty("k"));
-
-            // get key
-            AuditingwithErrorCorrection auditingwithErrorCorrection = new AuditingwithErrorCorrection(filePath, n, k);
-            FileInputStream keyFIS = new FileInputStream(keyFilePath);
-            Properties keyProperties = new Properties();
-            keyProperties.load(keyFIS);
-            keyFIS.close();
-            Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
-
             boolean verifyResult = auditingwithErrorCorrection.verify(key, challengeData, proofData);
             if (verifyResult)
                 System.out.println("Verify pass");
