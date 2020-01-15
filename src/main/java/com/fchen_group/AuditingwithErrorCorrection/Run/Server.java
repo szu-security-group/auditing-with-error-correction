@@ -2,7 +2,6 @@ package com.fchen_group.AuditingwithErrorCorrection.Run;
 
 import java.io.*;
 import java.util.Properties;
-import java.util.concurrent.TimeUnit;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -76,14 +75,7 @@ public class Server {
             CoolProtocol coolProtocol;
             CoolProtocol coolProtocolReceived = (CoolProtocol) msg;
 
-            // store file
             String filename = (new File(new String(coolProtocolReceived.filename))).getName();
-            File file = new File(pathPrefix + filename);
-            file.createNewFile();
-            FileOutputStream fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(coolProtocolReceived.content);
-            fileOutputStream.close();
-            uploadFile(pathPrefix + filename, filename);
 
             switch (coolProtocolReceived.op) {
                 case 0:
@@ -96,6 +88,16 @@ public class Server {
                     if (filePathLength == 0) {
                         filePathLength = filename.length() - ".paritys".length();
                     }
+
+                    // store file
+                    File file = new File(pathPrefix + filename);
+                    file.createNewFile();
+                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+                    fileOutputStream.write(coolProtocolReceived.content);
+                    fileOutputStream.close();
+                    // uploadFile(pathPrefix + filename, filename);
+
+                    // send confirm
                     filePathBytes = new byte[filePathLength];
                     System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
@@ -108,7 +110,8 @@ public class Server {
                     filePathBytes = new byte[filePathLength];
                     System.arraycopy(filename.getBytes(), 0, filePathBytes, 0, filePathLength);
                     filePath = new String(filePathBytes);
-                    ProofData proofData = prove(filePath);
+                    ChallengeData challengeData = (ChallengeData) deserialize(coolProtocolReceived.content);
+                    ProofData proofData = prove(filePath, challengeData);
                     String proofFilePath = pathPrefix + filePath + ".proof";
                     coolProtocol = new CoolProtocol(5, proofFilePath.getBytes(), serialize(proofData));
                     ctx.writeAndFlush(coolProtocol);
@@ -148,13 +151,11 @@ public class Server {
         PutObjectResult putObjectResult = cosClient.putObject(bucketName, cloudFileName, localFile);
     }
 
-    public ProofData prove(String filePath) throws Exception {
+    public ProofData prove(String filePath, ChallengeData challengeData) throws Exception {
         String filename = filePath;
         filePath = pathPrefix + filename;
         String propertiesFilePath = filePath + ".properties";
         String paritysFilePath = filePath + ".paritys";
-        String challengeFilePath = filePath + ".challenge";
-        String proofFilePath = filePath + ".proof";
 
         // get n and k
         FileInputStream propertiesFIS = new FileInputStream(propertiesFilePath);
@@ -163,24 +164,6 @@ public class Server {
         propertiesFIS.close();
         int n = Integer.parseInt(properties.getProperty("n"));
         int k = Integer.parseInt(properties.getProperty("k"));
-        // get challenge data
-        ChallengeData challengeData = null;
-        try {
-            File challengeFile = new File(challengeFilePath);
-            FileInputStream challengeFIS = new FileInputStream(challengeFile);
-            ObjectInputStream in = new ObjectInputStream(challengeFIS);
-            challengeData = (ChallengeData) in.readObject();
-            in.close();
-            challengeFIS.close();
-            challengeFile.delete();
-
-            System.out.println("challenge");
-            print(challengeData.coefficients);
-        } catch (ClassNotFoundException e) {
-            System.out.println("Class ChallengeData not found");
-            e.printStackTrace();
-            return null;
-        }
         // get paritys
         File paritysFile = new File(paritysFilePath);
         FileInputStream paritysFIS = new FileInputStream(paritysFile);

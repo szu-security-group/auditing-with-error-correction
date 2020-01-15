@@ -20,6 +20,7 @@ public class Client {
     private String filePath;
     private int n;
     private int k;
+    private ChallengeData challengeData;
 
     public static void main(String[] args) throws Exception {
         if (args.length == 2 && args[0].equals("audit")) {
@@ -175,19 +176,9 @@ public class Client {
             Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
 
             // audit
-            ChallengeData challengeData = auditingwithErrorCorrection.audit(key);
+            challengeData = auditingwithErrorCorrection.audit(key);
 
-            System.out.println("challenge");
-            print(challengeData.coefficients);
-
-            // store challenge data
-            FileOutputStream challengeFOS = new FileOutputStream(challengeFilePath);
-            ObjectOutputStream out = new ObjectOutputStream(challengeFOS);
-            out.writeObject(challengeData);
-            out.close();
-            challengeFOS.close();
-
-            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes());
+            CoolProtocol coolProtocol = new CoolProtocol(3, challengeFilePath.getBytes(), serialize(challengeData));
             ctx.writeAndFlush(coolProtocol);
         }
 
@@ -218,26 +209,6 @@ public class Client {
             keyProperties.load(keyFIS);
             keyFIS.close();
             Key key = new Key(keyProperties.getProperty("k"), keyProperties.getProperty("s"));
-
-            // get challenge data
-            ChallengeData challengeData = null;
-            try {
-                File challengeFile = new File(challengeFilePath);
-                FileInputStream challengeFIS = new FileInputStream(challengeFile);
-                ObjectInputStream in = new ObjectInputStream(challengeFIS);
-                challengeData = (ChallengeData) in.readObject();
-                in.close();
-                challengeFIS.close();
-                TimeUnit.SECONDS.sleep(3);
-                challengeFile.delete();
-
-                System.out.println("challenge");
-                print(challengeData.coefficients);
-            } catch (ClassNotFoundException e) {
-                System.out.println("Class ChallengeData not found");
-                e.printStackTrace();
-                return;
-            }
 
             boolean verifyResult = auditingwithErrorCorrection.verify(key, challengeData, proofData);
             if (verifyResult)
