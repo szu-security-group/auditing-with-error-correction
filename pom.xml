@@ -18,22 +18,88 @@
 
     <build>
         <plugins>
+            <!--<plugin>-->
+            <!--    <groupId>org.apache.maven.plugins</groupId>-->
+            <!--    <artifactId>maven-shade-plugin</artifactId>-->
+            <!--    <version>1.2.1</version>-->
+            <!--    <executions>-->
+            <!--        <execution>-->
+            <!--            <phase>package</phase>-->
+            <!--            <goals>-->
+            <!--                <goal>shade</goal>-->
+            <!--            </goals>-->
+            <!--            <configuration>-->
+            <!--                <transformers>-->
+            <!--                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">-->
+            <!--                        <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Running</mainClass>-->
+            <!--                    </transformer>-->
+            <!--                </transformers>-->
+            <!--            </configuration>-->
+            <!--        </execution>-->
+            <!--    </executions>-->
+            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>1.2.1</version>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Benchmark</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>benchmark</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>single</goal>
                         </goals>
                         <configuration>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Running</mainClass>
-                                </transformer>
-                            </transformers>
+                            <finalName>${project.build.finalName}_benchmark</finalName>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Benchmark</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>client</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.build.finalName}_client</finalName>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Client</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>server</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>${project.build.finalName}_server</finalName>
+                            <archive>
+                                <manifest>
+                                    <addClasspath>false</addClasspath>
+                                    <mainClass>com.fchen_group.AuditingwithErrorCorrection.Run.Server</mainClass>
+                                </manifest>
+                            </archive>
                         </configuration>
                     </execution>
                 </executions>
