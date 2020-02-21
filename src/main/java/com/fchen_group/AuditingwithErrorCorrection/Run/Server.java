@@ -27,7 +27,7 @@ public class Server {
         if (args.length == 2) {
             new Server(args[0], args[1]).run();
         } else {
-            System.out.println("show help");
+            show_help();
         }
     }
 
@@ -193,6 +193,14 @@ public class Server {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         return objectInputStream.readObject();
+    }
+
+    public static void show_help() {
+        System.out.println("使用方法：\n" +
+                "    java -jar server.jar [tempPath] [COSConfigFilePath]\n" +
+                "其中：\n" +
+                "    tempPath 是服务器用于暂存客户端上传来的文件的地方\n" +
+                "    COSConfigFilePath 是保存 COS 密钥信息等的配置文件的路径\n");
     }
 
     public static void print(byte[] data) {

@@ -32,7 +32,7 @@ public class Client {
         } else if (args.length == 4 && args[0].equals("outsource")) {
             new Client(args[0], args[1], Integer.parseInt(args[2]), Integer.parseInt(args[3])).run();
         } else {
-            System.out.println("show help");
+            show_help();
         }
     }
 
@@ -214,6 +214,23 @@ public class Client {
         ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
         ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream);
         return objectInputStream.readObject();
+    }
+    public static void show_help() {
+        System.out.printf("使用方法：\n" +
+                "客户端在审计过程中有两个阶段：outsource 阶段和 audit 阶段\n" +
+                "\n" +
+                "启动 outsource 的命令为：\n" +
+                "    java -jar client.jar outsource [filename] [n] [k]\n" +
+                "注：\n" +
+                "    在 outsource 完成之后，程序会在文件所在目录生成以下文件\n" +
+                "        [filename].key  [filename].paritys  [filename].properties\n" +
+                "    这三个文件在 audit 阶段中需要用到，请妥善保管好！\n" +
+                "\n" +
+                "启动 audit 的命令为：\n" +
+                "    java -jar client.jar audit [filename]\n" +
+                "注：\n" +
+                "    运行 audit 需要 outsource 阶段生成的三个文件：\n" +
+                "        [filename].key  [filename].paritys  [filename].properties\n");
     }
 
     public static void print(byte[] data) {
