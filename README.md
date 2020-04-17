@@ -19,5 +19,5 @@ If you are used to compile a java program in the command line, you can do it as 
 3.	Replace the string " C:\\Users\\Administrator\\Desktop\\100MB.rar" with your destination directory which stores the data that to be outsourced. Compile the program and then run it.
 4.	The performance result will be output in the console window.
 
-Note that we employ a third-party utility class MemoryUtil to measure the size of a running-time object in the memory.  To use this class, we need to send a parameter to the Java Virtual Machine: -javaagent:classmexer.jar. For more information about MemoryUtil, please refer to http://www.javamex.com/classmexer/.
+Note that we employ a third-party utility class MemoryUtil to measure the size of a running-time object in the memory.  To use this class, you need to send a parameter to the Java Virtual Machine: -javaagent:classmexer.jar. For more information about MemoryUtil, please refer to http://www.javamex.com/classmexer/.
 
