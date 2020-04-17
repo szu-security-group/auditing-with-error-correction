@@ -3,6 +3,8 @@ The auditing-with-error-correction uses the idea of integrating linear error cor
 
 There are three packages includes eleven classes:AuditingwithErrorCorrection package, ReedSolomon package and Run package. The AuditingwithErrorCorrection is the main package to implement the proposed scheme, while the ReedSolomon package implements the reed-solomon code and the Run package is the package where the main function and performance tests are performed.
 
+We also provide a [python script](challenge_length.py) to compute the challenge length.
+
 # Build
 We use Java 1.8.0_121 to develop this project and use Eclipse to compile it.
 
